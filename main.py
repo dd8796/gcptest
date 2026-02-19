@@ -71,7 +71,14 @@ def verifier_sequences_consecutives(prog_nos):
 
 def analyser_derive_process():
 
-    client = bigquery.Client()
+    client = bigquery.Client(
+        client_options={
+            "scopes": [
+                "https://www.googleapis.com/auth/drive",
+                "https://www.googleapis.com/auth/cloud-platform"
+            ]
+        }
+    )
 
     query_dash = "SELECT * FROM `theproject-1937.dash.dash2`"
     df_dashboard = client.query(query_dash).to_dataframe()
