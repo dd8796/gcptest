@@ -9,10 +9,10 @@ app = Flask(__name__)
 RAYON_BOULE = 20
 SEUIL_PSR_PROXIMITE = 2
 
-COL_PJI = 'PJI / OF'
-COL_SPOT = 'Spot Name'
-COL_PROG = 'Prog No'
-COL_DERIVE = 'Derive Process'
+COL_PJI = 'PJI__OF'
+COL_SPOT = 'Spot_Name'
+COL_PROG = 'Prog_No'
+COL_DERIVE = 'Derive_Process'
 
 
 # --------------------------------------------------------
