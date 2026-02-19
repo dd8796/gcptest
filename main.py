@@ -73,7 +73,7 @@ def analyser_derive_process():
 
     client = bigquery.Client()
 
-    query_dash = "SELECT * FROM `theproject-1937.dash.dash1`"
+    query_dash = "SELECT * FROM `theproject-1937.dash.dash2`"
     df_dashboard = client.query(query_dash).to_dataframe()
 
     query_ref = "SELECT * FROM `theproject-1937.dash.ref2`"
