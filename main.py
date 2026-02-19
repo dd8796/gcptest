@@ -6,10 +6,10 @@ from google.cloud import bigquery
 client = bigquery.Client()
 
 # Remplacer pd.read_csv par une requête SQL
-query_dash = "SELECT * FROM `theproject-1937.dash.DASH1`"
+query_dash = "SELECT * FROM `theproject-1937.dash.dash1`"
 df_dashboard = client.query(query_dash).to_dataframe()
 
-query_ref = "SELECT * FROM `theproject-1937.dash.reference`"
+query_ref = "SELECT * FROM `theproject-1937.dash.ref2`"
 df_coords = client.query(query_ref).to_dataframe()
 
 
