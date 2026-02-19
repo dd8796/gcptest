@@ -1,0 +1,6 @@
+flask
+google-cloud-bigquery
+pandas
+numpy
+db-dtypes
+gunicorn
