@@ -21,10 +21,10 @@ BQ_TABLE_COORDS    = os.environ.get("BQ_TABLE_COORDS",    "theproject-1937.dash.
 
 RAYON_BOULE           = int(os.environ.get("RAYON_BOULE", 20))        # mm
 SEUIL_PSR_PROXIMITE   = int(os.environ.get("SEUIL_PSR_PROXIMITE", 2))
-COL_PJI               = "PJI / OF"
-COL_SPOT              = "Spot Name"
-COL_PROG              = "Prog No"
-COL_DERIVE            = "Derive Process"
+COL_PJI    = "PJI___OF"
+COL_SPOT   = "Spot_Name"
+COL_PROG   = "Prog_No"
+COL_DERIVE = "Derive_Process"
 
 # --------------------------------------------------------
 # CHARGEMENT DEPUIS BIGQUERY
