@@ -16,8 +16,8 @@ app = Flask(__name__)
 # --------------------------------------------------------
 # CONFIGURATION
 # --------------------------------------------------------
-BQ_TABLE_DASHBOARD = os.environ.get("BQ_TABLE_DASHBOARD", "theproject-1937.dash.dash2")
-BQ_TABLE_COORDS    = os.environ.get("BQ_TABLE_COORDS",    "theproject-1937.dash.ref2")
+BQ_TABLE_DASHBOARD = os.environ.get("BQ_TABLE_DASHBOARD", "theproject-1937.dash.dash2_copy")
+BQ_TABLE_COORDS    = os.environ.get("BQ_TABLE_COORDS",    "theproject-1937.dash.ref2_copy")
 
 RAYON_BOULE           = int(os.environ.get("RAYON_BOULE", 20))        # mm
 SEUIL_PSR_PROXIMITE   = int(os.environ.get("SEUIL_PSR_PROXIMITE", 2))
