@@ -1,15 +1,14 @@
-# Utiliser une image légère de Python
-FROM python:3.9-slim
+FROM python:3.11-slim
 
-# Définir le dossier de travail
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copier les fichiers de dépendances et les installer
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier tout le code dans l'image
 COPY . .
 
-# Lancer l'application avec Gunicorn (plus robuste que app.run pour la prod)
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
