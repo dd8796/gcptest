@@ -36,14 +36,7 @@ SERVICE_ACCOUNT_FILE = "theproject-1937-b302d42c6bb4.json"
 # AUTHENTIFICATION BIGQUERY
 # ========================================================
 
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE
-)
-
-client = bigquery.Client(
-    credentials=credentials,
-    project=PROJECT_ID,
-)
+client = bigquery.Client(project=PROJECT_ID)
 
 print("✅ Connexion à BigQuery réussie")
 
