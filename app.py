@@ -4,40 +4,66 @@ from flask import Flask, jsonify
 import pandas as pd
 import numpy as np
 from google.cloud import bigquery
+from google.oauth2 import service_account
 
-# --------------------------------------------------------
-# LOGGING
-# --------------------------------------------------------
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+PROJECT_ID = "theproject-1937"
+
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
-app = Flask(__name__)
+BQ_TABLE_DASHBOARD = os.environ.get(
+    "BQ_TABLE_DASHBOARD",
+    "theproject-1937.dash.dash2_copy"
+)
 
-# --------------------------------------------------------
-# CONFIGURATION
-# --------------------------------------------------------
-BQ_TABLE_DASHBOARD = os.environ.get("BQ_TABLE_DASHBOARD", "theproject-1937.dash.dash2_copy")
-BQ_TABLE_COORDS    = os.environ.get("BQ_TABLE_COORDS",    "theproject-1937.dash.ref2_copy")
+BQ_TABLE_COORDS = os.environ.get(
+    "BQ_TABLE_COORDS",
+    "theproject-1937.dash.ref2_copy"
+)
 
-RAYON_BOULE           = int(os.environ.get("RAYON_BOULE", 20))        # mm
-SEUIL_PSR_PROXIMITE   = int(os.environ.get("SEUIL_PSR_PROXIMITE", 2))
+RAYON_BOULE = int(os.environ.get("RAYON_BOULE", 20))  # mm
+SEUIL_PSR_PROXIMITE = int(os.environ.get("SEUIL_PSR_PROXIMITE", 2))
+
 COL_PJI    = "PJI___OF"
 COL_SPOT   = "Spot_Name"
 COL_PROG   = "Prog_No"
 COL_DERIVE = "Derive_Process"
+
+SERVICE_ACCOUNT_FILE = "theproject-1937-b302d42c6bb4.json"
+
+
+# ========================================================
+# AUTHENTIFICATION BIGQUERY
+# ========================================================
+
+credentials = service_account.Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE
+)
+
+client = bigquery.Client(
+    credentials=credentials,
+    project=PROJECT_ID,
+)
+
+print("✅ Connexion à BigQuery réussie")
+
+
+app = Flask(__name__)
+
 
 # --------------------------------------------------------
 # CHARGEMENT DEPUIS BIGQUERY
 # --------------------------------------------------------
 def charger_donnees():
     """Charge et prépare les deux tables BigQuery."""
-    client = bigquery.Client()
-
     logger.info("Chargement BigQuery — dashboard: %s", BQ_TABLE_DASHBOARD)
     df_dashboard = client.query(f"SELECT * FROM `{BQ_TABLE_DASHBOARD}`").to_dataframe()
 
     logger.info("Chargement BigQuery — coords: %s", BQ_TABLE_COORDS)
     df_coords = client.query(f"SELECT * FROM `{BQ_TABLE_COORDS}`").to_dataframe()
+    # Conversion pour merger correctement
+    df_dashboard[COL_PROG] = pd.to_numeric(df_dashboard[COL_PROG], errors="coerce")
+    df_coords["Prog"] = pd.to_numeric(df_coords["Prog"], errors="coerce")
 
     # Nettoyage coordonnées (au cas où les valeurs arrivent en string avec virgule décimale)
     for col in ["X_Linx", "Y_Linx", "Z_Linx"]:
@@ -80,12 +106,12 @@ def verifier_proximite_spatiale(psr_coords):
                 psr_list[i]["X_Linx"], psr_list[i]["Y_Linx"], psr_list[i]["Z_Linx"],
                 psr_list[j]["X_Linx"], psr_list[j]["Y_Linx"], psr_list[j]["Z_Linx"],
             )
-            paire = f"{int(psr_list[i]['Spot Name'])} <-> {int(psr_list[j]['Spot Name'])}"
+            paire = f"{int(psr_list[i]['Spot_Name'])} <-> {int(psr_list[j]['Spot_Name'])}"
             distances[paire] = round(d, 2)
 
             if d <= RAYON_BOULE:
-                psr_proches.add(psr_list[i]["Spot Name"])
-                psr_proches.add(psr_list[j]["Spot Name"])
+                psr_proches.add(psr_list[i]["Spot_Name"])
+                psr_proches.add(psr_list[j]["Spot_Name"])
 
     alerte = len(psr_proches) >= SEUIL_PSR_PROXIMITE
     return alerte, list(psr_proches), distances
@@ -140,7 +166,7 @@ def analyser_derive_process(df_dashboard, df_coords):
         match_par_prog = pd.merge(
             groupe,
             df_coords[["Prog", "Timername", "Spotname", "X_Linx", "Y_Linx", "Z_Linx"]],
-            left_on=["Prog No", "Uai Label"],
+            left_on=["Prog_No", "Uai_Label"],
             right_on=["Prog", "Timername"],
             how="inner",
         )
@@ -171,7 +197,7 @@ def analyser_derive_process(df_dashboard, df_coords):
             logger.info("Coordonnées disponibles → Calcul des distances")
 
             df_calcul = df_coords_filtre[["Spotname", "X_Linx", "Y_Linx", "Z_Linx"]].rename(
-                columns={"Spotname": "Spot Name"}
+                columns={"Spotname": "Spot_Name"}
             )
 
             alerte_geo, psr_proches, distances = verifier_proximite_spatiale(df_calcul)
@@ -241,7 +267,7 @@ def analyser_derive_process(df_dashboard, df_coords):
             groupe_enrichi = pd.merge(
                 groupe,
                 df_coords[["Prog", "Timername", "Spotname"]],
-                left_on=["Prog No", "Uai Label"],
+                left_on=["Prog_No", "Uai_Label"],
                 right_on=["Prog", "Timername"],
                 how="left",
             )
@@ -250,7 +276,7 @@ def analyser_derive_process(df_dashboard, df_coords):
 
             for _, row in groupe_enrichi.iterrows():
                 spot_val = None
-                for col in ["Spot Name", "Spotname"]:
+                for col in ["Spot_Name", "Spotname"]:
                     raw = row.get(col)
                     if pd.notna(raw) and str(raw).strip() != "":
                         try:
@@ -260,7 +286,7 @@ def analyser_derive_process(df_dashboard, df_coords):
                             pass
 
                 if alerte["Type"] == "Séquences consécutives" or (spot_val in spots_en_alerte):
-                    uai  = row.get("Uai Label", "N/A")
+                    uai  = row.get("Uai_Label", "N/A")
                     spot = spot_val if spot_val is not None else "N/A"
                     cle  = (int(pji), uai, spot)
                     if cle not in lignes_affichees:
